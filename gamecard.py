@@ -17,7 +17,6 @@ def ncsd_serial(backup):
     serial = backup.read(0xa)
     return serial.decode("ascii")
 
-
 def ncsd_header(raw_header_data):
     ncsd_header = {
         'sha256sig': raw_header_data[0x0:0x100],
@@ -38,7 +37,7 @@ def ncsd_header(raw_header_data):
         return False
 
     card_info_header = {
-        'writable_address': raw_header_data[0x200:0x204],
+        'writable_address': struct.unpack("i", raw_header_data[0x200:0x204])[0] * 0x200,
         'card_info_bitmask': raw_header_data[0x204:0x208],
         'reserved1': raw_header_data[0x208:0x1000],
         'media_id_1': "%016x".upper() % struct.unpack("q", (raw_header_data[0x1000:0x1008])),
@@ -63,5 +62,6 @@ def ncsd_header(raw_header_data):
             'media_id': ncsd_header['media_id'],
             'product_code': card_info_header['ncch_header']['product_code'],
             'card_type': ['Inner Device', 'Card1', 'Card2', 'Extended Device'][int(ncsd_header['partition_flags'][5])],
+            'writable_address': card_info_header['writable_address'],
             }
 

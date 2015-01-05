@@ -226,8 +226,6 @@ def dump_savegame(disk, slot, output):
         sys.exit(1)
 
     diskfp = open(disk, "rb")
-    diskfp.seek(0x100000 * (slot + 1))
-    savedata = diskfp.read(0x100000)
 
     diskfp.seek(rom_list[slot][1])
     ncsd_header = gamecard.ncsd_header(diskfp.read(0x1200))
@@ -238,11 +236,22 @@ def dump_savegame(disk, slot, output):
         savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
         savegamefp.write(bytearray([0x00]*0x2))
         savegamefp.write(bytearray([0xff]*0x44))
-        savegamefp.write(savedata)
+        diskfp.seek(0x100000 * (slot + 1))
+        savegamefp.write(diskfp.read(0x100000))
         savegamefp.close()
-    else:
-        print("Error: I don't know how to handle Card2 saves :(")
-        sys.exit(1)
+    elif ncsd_header['card_type'] == 'Card2':
+        savegamefp = open(output, "wb")
+        savegamefp.write(b'CTR_SAVE')
+        savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
+        savegamefp.write(bytearray([0x00, 0x01]))
+        savegamefp.write(bytearray([0x00]*4))
+        diskfp.seek(rom_list[slot][1] + 0x1440)
+        savegamefp.write(diskfp.read(0x10))
+        savegamefp.write(bytearray([0xff]*0x30))
+        diskfp.seek(rom_list[slot][1] + ncsd_header['writable_address'])
+        for i in range(0, 10):
+            savegamefp.write(diskfp.read(0x100000))
+        savegamefp.close()
 
     diskfp.close()
 
@@ -256,9 +265,9 @@ def find_game(disk, product_code):
         ncsd_header = gamecard.ncsd_header(diskfp.read(0x1200))
         if ncsd_header['product_code'] == product_code:
             diskfp.close()
-            return rom_count
+            return (rom_count, ncsd_header)
         rom_count+=1
-    return None
+    return (None, None)
 
 def write_savegame(disk, savefile):
     savegamefp = open(savefile, "rb")
@@ -268,7 +277,7 @@ def write_savegame(disk, savefile):
         sys.exit(1)
 
     product_code = savegamefp.read(0xa).decode('ascii')
-    slot = find_game(disk, product_code)
+    slot,ncsd_header = find_game(disk, product_code)
 
     savegamefp.read(0x46)
 
@@ -277,9 +286,18 @@ def write_savegame(disk, savefile):
         sys.exit(1)
 
     diskfp = open(disk, "r+b")
-    diskfp.seek(0x100000 * (slot + 1))
-    diskfp.write(savegamefp.read(0x100000))
-    os.fsync(diskfp)
+
+    if ncsd_header['card_type'] == 'Card1':
+        diskfp.seek(0x100000 * (slot + 1))
+        diskfp.write(savegamefp.read(0x100000))
+        os.fsync(diskfp)
+    elif ncsd_header['card_type'] == 'Card2':
+        rom_list = get_rom_list(disk)
+        diskfp.seek(rom_list[slot][1] + ncsd_header['writable_address'])
+        for i in range(0, 10):
+            diskfp.write(savegamefp.read(0x100000))
+            os.fsync(diskfp)
+
     savegamefp.close()
     diskfp.close()
 
