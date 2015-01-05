@@ -148,11 +148,8 @@ def write_rom(disk, rom):
     diskfp.write(struct.pack("ii", start_block, rom_blocks))
 
     # add savegame slot
-    #diskfp.seek(0x100000)
-    #raw_savegames = list(diskfp.read(0x100000 * len(get_rom_list(disk))))
-    #new_raw_savegames = bytearray(raw_savegames + [0xff]*0x100000)
-    #diskfp.seek(0x100000)
-    #diskfp.write(new_raw_savegames)
+    diskfp.seek(0x100000 * (1 + len(get_rom_list(disk))))
+    diskfp.write(bytearray([0xff]*0x100000))
 
     # write data from template.txt to position 0x1400 in rom on sd-card
     serial = gamecard.ncsd_serial(rom)
@@ -203,11 +200,15 @@ def delete_rom(disk, slot):
     diskfp = open(disk, "r+b")
 
     # remove savegame and rearrange the rest of the savegames
-    #diskfp.seek(0x100000)
-    #raw_savegames = list(diskfp.read(0x100000 * len(get_rom_list(disk))))
-    #new_raw_savegames = bytearray(raw_savegames[0:slot*0x100000] + raw_savegames[(slot+1)*0x100000:] + [0xff]*0x100000)
-    #diskfp.seek(0x100000)
-    #diskfp.write(new_raw_savegames)
+    current_save = slot
+
+    while current_save < len(get_rom_list(disk)):
+        diskfp.seek(0x100000 * (current_save + 2))
+        tmp_savegame = diskfp.read(0x100000)
+        diskfp.seek(0x100000 * (current_save + 1))
+        diskfp.write(tmp_savegame)
+        current_save += 1
+    diskfp.write(bytearray([0xff]*0x100000))
 
     # remove slot header and rearrange the rest of the headers
     position_header_length = 0x100
@@ -218,19 +219,68 @@ def delete_rom(disk, slot):
     diskfp.write(new_raw_positions)
 
 
-def read_savegame(disk, slot):
-    diskfp = open(disk, "rb")
-    diskfp.seek(0x00100000 * (slot + 1))
-    savedata = diskfp.read(0x00100000)
-    os.fsync(diskfp)
-    diskfp.close()
-    return savedata
+def dump_savegame(disk, slot, output):
+    rom_list = get_rom_list(disk)
+    if slot >= len(rom_list):
+        print("Slot not found")
+        sys.exit(1)
 
-def write_savegame(disk, slot, savedata):
+    diskfp = open(disk, "rb")
+    diskfp.seek(0x100000 * (slot + 1))
+    savedata = diskfp.read(0x100000)
+
+    diskfp.seek(rom_list[slot][1])
+    ncsd_header = gamecard.ncsd_header(diskfp.read(0x1200))
+
+    if ncsd_header['card_type'] == 'Card1':
+        savegamefp = open(output, "wb")
+        savegamefp.write(b'CTR_SAVE')
+        savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
+        savegamefp.write(bytearray([0x00]*0x2))
+        savegamefp.write(bytearray([0xff]*0x44))
+        savegamefp.write(savedata)
+        savegamefp.close()
+    else:
+        print("Error: I don't know how to handle Card2 saves :(")
+        sys.exit(1)
+
+    diskfp.close()
+
+def find_game(disk, product_code):
+    rom_list = get_rom_list(disk)
+    diskfp = open(disk, "rb")
+    slot = -1
+    rom_count = 0
+    for rom in rom_list:
+        diskfp.seek(rom[1])
+        ncsd_header = gamecard.ncsd_header(diskfp.read(0x1200))
+        if ncsd_header['product_code'] == product_code:
+            diskfp.close()
+            return rom_count
+        rom_count+=1
+    return None
+
+def write_savegame(disk, savefile):
+    savegamefp = open(savefile, "rb")
+    ctr_save = savegamefp.read(0x8)
+    if ctr_save != b'CTR_SAVE':
+        print("Error: Not a valid savegame")
+        sys.exit(1)
+
+    product_code = savegamefp.read(0xa).decode('ascii')
+    slot = find_game(disk, product_code)
+
+    savegamefp.read(0x46)
+
+    if slot == None:
+        print("Error: Game not on disk")
+        sys.exit(1)
+
     diskfp = open(disk, "r+b")
-    diskfp.seek(0x00100000 * (slot + 1))
-    diskfp.write(savedata)
+    diskfp.seek(0x100000 * (slot + 1))
+    diskfp.write(savegamefp.read(0x100000))
     os.fsync(diskfp)
+    savegamefp.close()
     diskfp.close()
 
 def check_if_sky3ds_disk(disk):

@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument('-B', '--backup-savegame', help='Backup savegame from disk')
     parser.add_argument('-R', '--erase-savegame', help='Erase savegame from disk')
 
-    parser.add_argument('-o', '--output', help='Output path for --backup and --backup-savegame')
+    parser.add_argument('-s', '--slot', help='Slot ID for --backup and --backup-savegame')
 
     parser.add_argument('-f', '--format', help='Format disk', action="store_true")
     parser.add_argument('-c', '--confirm-format', action="store_true")
@@ -49,8 +49,9 @@ if __name__ == '__main__':
         print("No disk specified.")
         sys.exit(1)
 
-    if (args.backup != None) + (args.write != None) + (args.remove != None) + args.list + args.format + args.test + args.update != 1:
+    if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + (args.erase_savegame != None) + args.list + args.format + args.test + args.update != 1:
         print("Please specify exactly one operation.")
+        sys.exit(1)
 
     if args.format:
         if not args.confirm_format:
@@ -111,11 +112,20 @@ if __name__ == '__main__':
     if args.update:
         titles.update_title_db()
 
-    if args.backup != None and args.output == None:
-        print("Please specify output file")
+    if args.backup != None and args.slot == None:
+        print("Please specify slot")
         sys.exit(1)
-    elif args.backup != None and args.output != None:
-        disk.dump_rom(args.disk, int(args.backup), args.output)
+    elif args.backup != None and args.slot != None:
+        disk.dump_rom(args.disk, int(args.slot), args.backup)
+
+    if args.backup_savegame != None and args.slot == None:
+        print("Please specify slot")
+        sys.exit(1)
+    elif args.backup_savegame != None and args.slot != None:
+        disk.dump_savegame(args.disk, int(args.slot), args.backup_savegame)
+
+    if args.write_savegame != None:
+        disk.write_savegame(args.disk, args.write_savegame)
 
     if args.write != None:
         disk.write_rom(args.disk, args.write)
