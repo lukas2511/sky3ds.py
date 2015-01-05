@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-W', '--write-savegame', help='Write savegame to disk')
     parser.add_argument('-B', '--backup-savegame', help='Backup savegame from disk')
-    parser.add_argument('-R', '--erase-savegame', help='Erase savegame from disk')
+#    parser.add_argument('-R', '--erase-savegame', help='Erase savegame from disk')
 
     parser.add_argument('-s', '--slot', help='Slot ID for --backup and --backup-savegame')
 
@@ -41,15 +41,13 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--confirm-format', action="store_true")
 
     parser.add_argument('-u', '--update', help='Update title database', action='store_true')
-
-    parser.add_argument('-t', '--test', action="store_true")
     args = parser.parse_args()
 
     if not args.disk and not args.update:
         print("No disk specified.")
         sys.exit(1)
 
-    if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + (args.erase_savegame != None) + args.list + args.format + args.test + args.update != 1:
+    if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + args.list + args.format + args.update != 1:
         print("Please specify exactly one operation.")
         sys.exit(1)
 
@@ -62,10 +60,6 @@ if __name__ == '__main__':
     if not args.update and not disk.check_if_sky3ds_disk(args.disk):
         print("This is not a sky3ds disk. Aborting.")
         sys.exit(1)
-
-    if args.test:
-        disk.write_savegame(args.disk, 1, bytearray([0xff]*0x00100000))
-        disk.write_savegame(args.disk, 2, bytearray([0xff]*0x00100000))
 
     if args.remove != None:
         rom_list = disk.get_rom_list(args.disk)
