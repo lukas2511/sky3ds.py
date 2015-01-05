@@ -61,6 +61,7 @@ def ncsd_header(raw_header_data):
     return {
             'size': ncsd_header['size'],
             'media_id': ncsd_header['media_id'],
-            'product_code': card_info_header['ncch_header']['product_code']
+            'product_code': card_info_header['ncch_header']['product_code'],
+            'card_type': ['Inner Device', 'Card1', 'Card2', 'Extended Device'][int(ncsd_header['partition_flags'][5])],
             }
 

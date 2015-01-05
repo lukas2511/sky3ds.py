@@ -31,6 +31,10 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--backup', help='Backup rom from disk')
     parser.add_argument('-r', '--remove', help='Remove rom from disk')
 
+    parser.add_argument('-W', '--write-savegame', help='Write savegame to disk')
+    parser.add_argument('-B', '--backup-savegame', help='Backup savegame from disk')
+    parser.add_argument('-R', '--erase-savegame', help='Erase savegame from disk')
+
     parser.add_argument('-o', '--output', help='Output path for --backup and --backup-savegame')
 
     parser.add_argument('-f', '--format', help='Format disk', action="store_true")
@@ -72,7 +76,7 @@ if __name__ == '__main__':
     if args.list:
         rom_list = disk.get_rom_list(args.disk)
         diskfp = open(args.disk, "rb")
-        rom_table = [['Slot', 'Start', 'Size', 'Code', 'Title']]
+        rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
         for rom in rom_list:
             slot = rom[0]
             start = rom[1]
@@ -84,7 +88,14 @@ if __name__ == '__main__':
                 title = rom_info['name']
             else:
                 title = "???"
-            rom_table += [[ slot, "%d MB" % int(rom[1] / 1024 / 1024), "%d MB" % int(rom[2] / 1024 / 1024), rom_header['product_code'], title ]]
+            rom_table += [[
+                slot,
+                "%d MB" % int(rom[1] / 1024 / 1024),
+                "%d MB" % int(rom[2] / 1024 / 1024),
+                rom_header['card_type'],
+                rom_header['product_code'],
+                title,
+                ]]
 
         col_width = [max(len(str(x)) for x in col) for col in zip(*rom_table)]
         for line in rom_table:
