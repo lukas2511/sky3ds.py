@@ -1,6 +1,4 @@
-from sky3ds.disk import Sky3DS_Disk
 import unittest
-import filecmp
 
 class Sky3DS_Disk_Test(unittest.TestCase):
     disk = None
@@ -67,5 +65,15 @@ class Sky3DS_Disk_Test(unittest.TestCase):
             raise Exception("Rom not deleted correctly or slot detection broken")
 
 if __name__ == '__main__':
-        unittest.main()
+    import filecmp
+    import sys
+    sys.path.append(".")
+    sys.path.append("./third_party/appdirs")
+    sys.path.append("./third_party/progressbar")
+    from sky3ds.disk import Sky3DS_Disk
+    unittest.main()
+else:
+    from sky3ds.disk import Sky3DS_Disk
+    import filecmp
+    import sys
 

@@ -403,8 +403,7 @@ class Sky3DS_Disk:
         self.fail_on_non_sky3ds()
 
         if slot >= len(self.rom_list):
-            print("Slot not found")
-            sys.exit(1)
+            raise Exception("Slot not found")
 
         self.diskfp.seek(0)
 
@@ -481,8 +480,7 @@ class Sky3DS_Disk:
         savegamefp = open(savefile, "rb")
         ctr_save = savegamefp.read(0x8)
         if ctr_save != b'CTR_SAVE':
-            print("Error: Not a valid savegame")
-            sys.exit(1)
+            raise Exception("Not a valid savegame")
 
         product_code = savegamefp.read(0xa).decode('ascii')
         slot,ncsd_header = self.find_game(product_code)
@@ -490,8 +488,7 @@ class Sky3DS_Disk:
         savegamefp.read(0x46)
 
         if slot == None:
-            print("Error: Game not on disk")
-            sys.exit(1)
+            raise Exception("Game not on disk")
 
         if ncsd_header['card_type'] == 'Card1':
             self.diskfp.seek(0x100000 * (slot + 1))
