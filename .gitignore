@@ -1,3 +1,10 @@
+# python related
 __pycache__/
 .venv
+
+# 3ds related
 *.3ds
+*.sav
+
+# tests related
+*.img
