@@ -3,7 +3,7 @@ import os
 import json
 import urllib.request
 from xml.dom import minidom
-from third_party.appdirs.appdirs import user_data_dir
+from appdirs import user_data_dir
 
 data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
 template_txt = os.path.join(data_dir, 'template.txt')

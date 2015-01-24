@@ -5,7 +5,9 @@ import json
 import time
 import argparse
 
-from third_party.appdirs.appdirs import user_data_dir
+sys.path.append("third_party/appdirs")
+sys.path.append("third_party/progressbar")
+from appdirs import user_data_dir
 
 from sky3ds import disk, gamecard, titles
 
