@@ -75,29 +75,17 @@ class Sky3DS_Disk:
         self.disk_size = disk_size
 
     def format(self):
-        """"Format" sdcard
+        """Format sdcard
 
-        Currently this codes writes the first 512K bytes from an original
-        DiskWriter format, but may be rewritten in the future. This should
-        hide or not even create the FAT partition at all in the future.
-
-        This function also writes zeros to the area of Card1 savegames."""
-
-        empty_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'empty.img')
-        fatfp = open(empty_img, "rb")
-        size = os.path.getsize(empty_img)
+        This code basically fills the first 0x200 bytes with 0xff, except
+        at 0x100 - 0x103 where the magic string "ROMS" is written.
+        It also writes zeros to the area for Card1 savegames."""
 
         self.diskfp.seek(0)
-
-        written = 0
-        while written < size:
-            chunk = fatfp.read(1024*1024)
-
-            self.diskfp.write(chunk)
-            os.fsync(self.diskfp)
-
-            written = written + len(chunk)
-        fatfp.close()
+        # fill first 0x200 bytes with 0xff except for magic string
+        self.diskfp.write(bytearray([0xff]*0x100))
+        self.diskfp.write(bytearray("ROMS", "ascii"))
+        self.diskfp.write(bytearray([0xff]*0xfc))
 
         # erase savegame slots
         for i in range(1, 32):
