@@ -3,7 +3,7 @@ import os
 import json
 import urllib.request
 from xml.dom import minidom
-from appdirs import user_data_dir
+from third_party.appdirs.appdirs import user_data_dir
 
 data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
 template_txt = os.path.join(data_dir, 'template.txt')
@@ -11,12 +11,16 @@ template_json = os.path.join(data_dir, 'template.json')
 titles_json = os.path.join(data_dir, 'titles.json')
 
 def get_template(serial, sha1):
-    templates = json.load(open(template_json))
+    template_json_fp = open(template_json)
+    templates = json.load(template_json_fp)
+    template_json_fp.close()
 
     return next((template for template in templates if template["sha1"] == sha1 and template["serial"] == serial), None)
 
 def convert_template_to_json():
-    templates = open(template_txt).read().split("** : ")[1:]
+    template_txt_fp = open(template_txt)
+    templates = template_txt_fp.read().split("** : ")[1:]
+    template_txt_fp.close()
     out_templates = []
     for template in templates:
         template = template.split("\n")[:-3]
@@ -26,7 +30,9 @@ def convert_template_to_json():
             'card_data': " ".join(template[3:])
         })
 
-    open(template_json, "w").write(json.dumps(out_templates))
+    template_json_fp = open(template_json, "w")
+    template_json_fp.write(json.dumps(out_templates))
+    template_json_fp.close()
 
 def update_title_db():
     source = "http://3ds.essh.co/xml.php"
@@ -59,12 +65,16 @@ def update_title_db():
             error += 1
             pass
 
-    open(titles_json, "w").write(json.dumps(releases))
+    titles_json_fp = open(titles_json, "w")
+    titles_json_fp.write(json.dumps(releases))
+    titles_json_fp.close()
     print("Title database updated (%d entries, %d failed)" % (len(releases), error))
 
 def rom_info(product_code, media_id):
     try:
-        releases = json.load(open(titles_json,'r'))
+        titles_json_fp = open(titles_json)
+        releases = json.load(titles_json_fp)
+        titles_json_fp.close()
         product_code = product_code[0:3] + "-" + product_code[6:10]
 
         selector = "%s-%s" % (product_code, media_id)
@@ -77,7 +87,5 @@ def rom_info(product_code, media_id):
 
     except:
         return False
-#!/usr/bin/env python3
-import json
 
 

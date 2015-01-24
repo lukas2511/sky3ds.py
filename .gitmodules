@@ -1,0 +1,6 @@
+[submodule "third_party/appdirs"]
+	path = third_party/appdirs
+	url = https://github.com/ActiveState/appdirs
+[submodule "third_party/progressbar"]
+	path = third_party/progressbar
+	url = https://github.com/coagulant/progressbar-python3

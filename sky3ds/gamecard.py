@@ -5,16 +5,14 @@ import json
 import sys
 import os
 
-def ncch_sha1sum(backup):
-    backup = open(backup, "rb")
-    backup.seek(0x1000)
-    header = backup.read(0x200)
+def ncch_sha1sum(backupfp):
+    backupfp.seek(0x1000)
+    header = backupfp.read(0x200)
     return hashlib.sha1(header).hexdigest()
 
-def ncsd_serial(backup):
-    backup = open(backup, "rb")
-    backup.seek(0x1150)
-    serial = backup.read(0xa)
+def ncsd_serial(backupfp):
+    backupfp.seek(0x1150)
+    serial = backupfp.read(0xa)
     return serial.decode("ascii")
 
 def ncsd_header(raw_header_data):

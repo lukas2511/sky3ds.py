@@ -1,2 +1,0 @@
-git+https://github.com/coagulant/progressbar-python3
-appdirs

@@ -5,11 +5,9 @@ import json
 import time
 import argparse
 
-from appdirs import user_data_dir
-from progressbar import FileTransferSpeed, ProgressBar, Percentage, Bar
-import disk
-import gamecard
-import titles
+from third_party.appdirs.appdirs import user_data_dir
+
+from sky3ds import disk, gamecard, titles
 
 if __name__ == '__main__':
     data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
@@ -21,6 +19,7 @@ if __name__ == '__main__':
         print("Please put template.txt in %s" % data_dir)
         sys.exit(1)
     if not os.path.exists(template_json) or time.ctime(os.path.getmtime(template_txt)) > time.ctime(os.path.getmtime(template_json)):
+        print("Found updated template.txt. Converting...")
         titles.convert_template_to_json()
 
     parser = argparse.ArgumentParser()
@@ -47,6 +46,8 @@ if __name__ == '__main__':
         print("No disk specified.")
         sys.exit(1)
 
+    disk = disk.Sky3DS_Disk(args.disk)
+
     if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + args.list + args.format + args.update != 1:
         print("Please specify exactly one operation.")
         sys.exit(1)
@@ -55,29 +56,27 @@ if __name__ == '__main__':
         if not args.confirm_format:
             print("Please confirm format operation with '-c'.")
             sys.exit(1)
-        disk.format(args.disk)
+        disk.format()
+        sys.exit(0)
 
-    if not args.update and not disk.check_if_sky3ds_disk(args.disk):
+    if not args.update and not disk.is_sky3ds_disk:
         print("This is not a sky3ds disk. Aborting.")
         sys.exit(1)
 
     if args.remove != None:
-        rom_list = disk.get_rom_list(args.disk)
         args.remove = int(args.remove)
-        if args.remove in [i[0] for i in rom_list]:
-            disk.delete_rom(args.disk, args.remove)
+        if args.remove in [i[0] for i in disk.rom_list]:
+            disk.delete_rom(args.remove)
             print("Removed rom from slot %d" % args.remove)
+        sys.exit(0)
 
     if args.list:
-        rom_list = disk.get_rom_list(args.disk)
-        diskfp = open(args.disk, "rb")
         rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
-        for rom in rom_list:
+        for rom in disk.rom_list:
             slot = rom[0]
             start = rom[1]
             size = rom[2]
-            diskfp.seek(start)
-            rom_header = gamecard.ncsd_header(diskfp.read(0x1200))
+            rom_header = disk.ncsd_header(slot)
             rom_info = titles.rom_info(rom_header['product_code'], rom_header['media_id'])
             if rom_info:
                 title = rom_info['name']
@@ -97,31 +96,35 @@ if __name__ == '__main__':
             print("| " + " | ".join("{:{}}".format(x, col_width[i]) for i, x in enumerate(line)) + " |")
 
         print("")
-        free_blocks = disk.get_free_blocks(args.disk)
-        total_free_blocks = sum(512*i[1] for i in free_blocks)
-        disk_size = disk.get_disk_size(args.disk)
+        total_free_blocks = sum(512*i[1] for i in disk.free_blocks)
 
-        print("Disk Size: %d MB | Free space: %d MB | Largest free continous space: %d MB" % (disk_size/1024/1024, total_free_blocks/1024/1024, 512 * free_blocks[0][1]/1024/1024))
+        print("Disk Size: %d MB | Free space: %d MB | Largest free continous space: %d MB" % (disk.disk_size/1024/1024, total_free_blocks/1024/1024, 512 * disk.free_blocks[0][1]/1024/1024))
+        sys.exit(0)
 
     if args.update:
         titles.update_title_db()
+        sys.exit(0)
 
     if args.backup != None and args.slot == None:
         print("Please specify slot")
         sys.exit(1)
     elif args.backup != None and args.slot != None:
-        disk.dump_rom(args.disk, int(args.slot), args.backup)
+        disk.dump_rom(int(args.slot), args.backup)
+        sys.exit(0)
 
     if args.backup_savegame != None and args.slot == None:
         print("Please specify slot")
         sys.exit(1)
     elif args.backup_savegame != None and args.slot != None:
-        disk.dump_savegame(args.disk, int(args.slot), args.backup_savegame)
+        disk.dump_savegame(int(args.slot), args.backup_savegame)
+        sys.exit(0)
 
     if args.write_savegame != None:
-        disk.write_savegame(args.disk, args.write_savegame)
+        disk.write_savegame(args.write_savegame)
+        sys.exit(0)
 
     if args.write != None:
-        disk.write_rom(args.disk, args.write)
+        disk.write_rom(args.write)
+        sys.exit(0)
 
 
