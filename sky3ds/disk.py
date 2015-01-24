@@ -30,7 +30,7 @@ class Sky3DS_Disk:
         try:
             self.get_disk_size()
         except:
-            raise Exception("Couldn't get disksize, will not continue.");
+            raise Exception("Couldn't get disksize, will not continue.")
 
         try:
             self.diskfp = open(disk_path, "r+b")
