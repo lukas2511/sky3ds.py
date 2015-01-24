@@ -67,11 +67,12 @@ class Sky3DS_Disk:
         and reads how many bytes were skipped. This should be replaced with
         something more clean."""
 
-        diskfd = os.open(self.disk_path, os.O_RDONLY)
-        disk_size = os.lseek(diskfd, 0, os.SEEK_END)
+        diskfd = open(self.disk_path, "rb")
+        diskfd.seek(0, os.SEEK_END)
+        disk_size = diskfd.tell()
+        diskfd.close()
         disk_size = disk_size - disk_size % 0x2000000
-        os.close(diskfd)
-        self.disk_size = disk_size;
+        self.disk_size = disk_size
 
     def format(self):
         """"Format" sdcard
