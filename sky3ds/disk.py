@@ -4,7 +4,7 @@ import os
 import struct
 
 try:
-    from third_party.progressbar.progressbar import FileTransferSpeed, ProgressBar, Percentage, Bar
+    from progressbar import FileTransferSpeed, ProgressBar, Percentage, Bar
 except:
     pass
 
