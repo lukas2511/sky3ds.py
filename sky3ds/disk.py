@@ -27,15 +27,17 @@ class Sky3DS_Disk:
         disk_path -- Location to sdcard blockdevice (not mount or partition!)"""
 
         self.disk_path = disk_path
-        try:
-            self.get_disk_size()
-        except:
-            raise Exception("Couldn't get disksize, will not continue.")
 
         try:
             self.diskfp = open(disk_path, "r+b")
         except:
             raise Exception("Couldn't open disk, can't continue.")
+
+        try:
+            self.get_disk_size()
+        except:
+            raise Exception("Couldn't get disksize, will not continue.")
+
 
         self.check_if_sky3ds_disk()
 
@@ -67,11 +69,11 @@ class Sky3DS_Disk:
         and reads how many bytes were skipped. This should be replaced with
         something more clean."""
 
-        diskfd = open(self.disk_path, "rb")
-        diskfd.seek(0, os.SEEK_END)
-        disk_size = diskfd.tell()
-        diskfd.close()
+        self.diskfp.seek(0, os.SEEK_END)
+        disk_size = self.diskfp.tell()
         disk_size = disk_size - disk_size % 0x2000000
+        if disk_size == 0:
+            raise Exception("0 byte disk?!")
         self.disk_size = disk_size
 
     def format(self):
