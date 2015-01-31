@@ -65,19 +65,13 @@ class Sky3DS_Disk:
     def get_disk_size(self):
         """Get sdcard size in bytes
 
-        This currently is an ugly workaround. It tries to seek in 32MB blocks
-        until it fails. If it fails it's probably outside of the blockdevice.
+        This currently is an ugly workaround. It seeks to the end of the sdcard
+        and reads how many bytes were skipped. This should be replaced with
+        something more clean."""
 
-        I really hope this works."""
-
-        self.diskfp.seek(0)
-        disk_size = 0
-        while True:
-            try:
-                self.diskfp.seek(disk_size + 32*1024*1024)
-                disk_size += 32*1024*1024
-            except:
-                break
+        self.diskfp.seek(0, os.SEEK_END)
+        disk_size = self.diskfp.tell()
+        disk_size = disk_size - disk_size % 0x2000000
         if disk_size == 0:
             raise Exception("0 byte disk?!")
         self.disk_size = disk_size
