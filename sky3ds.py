@@ -73,7 +73,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.list:
-        rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
+        rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title', 'Save Crypto']]
         for rom in disk.rom_list:
             slot = rom[0]
             start = rom[1]
@@ -82,8 +82,10 @@ if __name__ == '__main__':
             rom_info = titles.rom_info(rom_header['product_code'], rom_header['media_id'])
             if rom_info:
                 title = rom_info['name']
+                firmware = rom_info['firmware']
             else:
                 title = "???"
+                firmware = "???"
             rom_table += [[
                 slot,
                 "%d MB" % int(rom[1] / 1024 / 1024),
@@ -91,6 +93,9 @@ if __name__ == '__main__':
                 rom_header['card_type'],
                 rom_header['product_code'],
                 title,
+                rom_header['save_crypto'].rjust(12),
+                #firmware,
+                #'Yes' if rom_header['contains_update'] else 'No',
                 ]]
 
         col_width = [max(len(str(x)) for x in col) for col in zip(*rom_table)]

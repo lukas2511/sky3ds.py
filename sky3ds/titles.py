@@ -60,6 +60,7 @@ def update_title_db():
                 'publisher': release.getElementsByTagName('publisher')[0].firstChild.nodeValue,
                 'languages': release.getElementsByTagName('languages')[0].firstChild.nodeValue,
                 'imgcrc': release.getElementsByTagName('imgcrc')[0].firstChild.nodeValue,
+                'firmware': release.getElementsByTagName('firmware')[0].firstChild.nodeValue,
             }})
         except:
             error += 1

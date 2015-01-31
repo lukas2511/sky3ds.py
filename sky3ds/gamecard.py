@@ -52,8 +52,23 @@ def ncsd_header(raw_header_data):
             'logo_region_hash': raw_header_data[0x1130:0x1150],
             'product_code': raw_header_data[0x1150:0x1160].decode('ascii').rstrip('\0'),
             # ...
+            'flags': raw_header_data[0x1188:0x1190],
+            # ...
         },
     }
+
+    part_flags = ncsd_header['partition_flags']
+
+    if part_flags[3] > 0:
+        if part_flags[1] > 0:
+            save_crypto = ">6.x"
+        else:
+            save_crypto = "<6.x"
+    else:
+        save_crypto = "Repeat. Fail"
+
+    contains_update = True if card_info_header['ncch_header']['flags'][5] & (1 << 2) else False
+    #save_crypto += str(part_flags)
 
     return {
             'size': ncsd_header['size'],
@@ -61,5 +76,7 @@ def ncsd_header(raw_header_data):
             'product_code': card_info_header['ncch_header']['product_code'],
             'card_type': ['Inner Device', 'Card1', 'Card2', 'Extended Device'][int(ncsd_header['partition_flags'][5])],
             'writable_address': card_info_header['writable_address'],
+            'save_crypto': save_crypto,
+            'contains_update': contains_update,
             }
 
