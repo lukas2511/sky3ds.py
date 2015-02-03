@@ -36,8 +36,10 @@ class Sky3DS_Disk:
         try:
             self.get_disk_size()
         except:
-            raise Exception("Couldn't get disksize, will not continue.")
-
+            try:
+                self.alternative_super_mega_ugly_get_disk_size_workaround_function_please_delete_me()
+            except:
+                raise Exception("Couldn't get disksize, will not continue.")
 
         self.check_if_sky3ds_disk()
 
@@ -74,6 +76,37 @@ class Sky3DS_Disk:
         disk_size = disk_size - disk_size % 0x2000000
         if disk_size == 0:
             raise Exception("0 byte disk?!")
+        self.disk_size = disk_size
+
+    def alternative_super_mega_ugly_get_disk_size_workaround_function_please_delete_me(self):
+        """no, just no."""
+
+        disk_size = 0
+        disk_jump_size = 1024*1024*1024
+        min_jump_size = 32*1024*1024
+        max_disk_size = 130*1024*1024*1024
+
+        while disk_jump_size >= min_jump_size:
+            try:
+                while disk_size < max_disk_size:
+                    # read 1 byte
+                    self.diskfp.seek(disk_size + disk_jump_size)
+                    tmp = self.diskfp.read(1)
+                    # write byte back
+                    self.diskfp.seek(disk_size + disk_jump_size)
+                    self.diskfp.write(tmp)
+                    # read + write succeeded, still in boundaries of disk..
+                    disk_size+=disk_jump_size
+            except:
+                disk_jump_size /= 2
+                pass
+
+        if disk_size > max_disk_size:
+            raise Exception("I don't think your microsd card is 130GB in size, so yea, uhm, I won't continue, sorry.")
+
+        if disk_size == 0:
+            raise Exception("0 byte disk?!?")
+
         self.disk_size = disk_size
 
     def format(self):
@@ -193,6 +226,9 @@ class Sky3DS_Disk:
         rom -- path to rom file"""
 
         self.fail_on_non_sky3ds()
+
+        # follow symlink
+        rom = os.path.realpath(rom)
 
         # get rom size and calculate block count
         rom_size = os.path.getsize(rom)
