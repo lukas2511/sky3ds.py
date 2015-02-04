@@ -92,6 +92,9 @@ class Sky3DS_Disk:
                     # read 1 byte
                     self.diskfp.seek(disk_size + disk_jump_size)
                     tmp = self.diskfp.read(1)
+                    # only proceed if we read exactly 1 byte
+                    if len(tmp) != 1:
+                        raise Exception("Not 1 byte.")
                     # write byte back
                     self.diskfp.seek(disk_size + disk_jump_size)
                     self.diskfp.write(tmp)
