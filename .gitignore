@@ -1,6 +1,7 @@
 # python related
 __pycache__/
 .venv
+*.pyc
 
 # 3ds related
 *.3ds

@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+
 import os
 import json
-import urllib.request
+import sys
 from xml.dom import minidom
 from appdirs import user_data_dir
+
+if sys.version_info.major == 3:
+    import urllib.request
+else:
+    import urllib2
 
 data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
 template_txt = os.path.join(data_dir, 'template.txt')
@@ -37,10 +43,15 @@ def convert_template_to_json():
 def update_title_db():
     source = "http://3ds.essh.co/xml.php"
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Ubuntu/12.04 Chromium/18.0.1025.168 Chrome/18.0.1025.168 Safari/535.19'
-    xml_data = urllib.request.urlopen(urllib.request.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+
+    if sys.version_info.major == 3:
+        xml_data = urllib.request.urlopen(urllib.request.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+    else:
+        xml_data = urllib2.urlopen(urllib2.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+
     for bad_char in [0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0b, 0x0e, 0x0f]:
         xml_data = xml_data.replace(chr(bad_char), "")
-    xmldoc = minidom.parseString(xml_data)
+    xmldoc = minidom.parseString(xml_data.encode('utf-8'))
     itemlist = xmldoc.getElementsByTagName('release')
 
     releases = {}

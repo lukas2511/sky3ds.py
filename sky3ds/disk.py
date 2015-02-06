@@ -302,7 +302,12 @@ class Sky3DS_Disk:
         serial = gamecard.ncsd_serial(romfp)
         sha1 = gamecard.ncch_sha1sum(romfp)
         template_data = titles.get_template(serial, sha1)
-        card_data = bytes.fromhex(template_data['card_data'])
+
+        if sys.version_info.major == 3:
+            card_data = bytes.fromhex(template_data['card_data'])
+        else:
+            card_data = bytearray.fromhex(template_data['card_data'])
+
         self.diskfp.seek(start_block * 0x200 + 0x1400)
         self.diskfp.write(card_data)
 

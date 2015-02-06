@@ -59,6 +59,9 @@ def ncsd_header(raw_header_data):
 
     part_flags = ncsd_header['partition_flags']
 
+    if sys.version_info.major == 2:
+        part_flags = list(ord(x) for x in part_flags)
+
     if part_flags[3] > 0:
         if part_flags[1] > 0:
             save_crypto = ">6.x"
@@ -67,14 +70,19 @@ def ncsd_header(raw_header_data):
     else:
         save_crypto = "Repeat. Fail"
 
-    contains_update = True if card_info_header['ncch_header']['flags'][5] & (1 << 2) else False
+    if sys.version_info.major == 3:
+        contains_update = True if int(card_info_header['ncch_header']['flags'][5]) & (1 << 2) else False
+        card_type = int(ncsd_header['partition_flags'][5])
+    else:
+        contains_update = True if ord(card_info_header['ncch_header']['flags'][5]) & (1 << 2) else False
+        card_type = ord(ncsd_header['partition_flags'][5])
     #save_crypto += str(part_flags)
 
     return {
             'size': ncsd_header['size'],
             'media_id': ncsd_header['media_id'],
             'product_code': card_info_header['ncch_header']['product_code'],
-            'card_type': ['Inner Device', 'Card1', 'Card2', 'Extended Device'][int(ncsd_header['partition_flags'][5])],
+            'card_type': ['Inner Device', 'Card1', 'Card2', 'Extended Device'][card_type],
             'writable_address': card_info_header['writable_address'],
             'save_crypto': save_crypto,
             'contains_update': contains_update,
