@@ -86,12 +86,15 @@ class Sky3DS_Disk:
         min_jump_size = 32*1024*1024
         max_disk_size = 130*1024*1024*1024
 
-        while disk_jump_size >= min_jump_size:
+        while disk_jump_size >= min_jump_size and disk_size <= max_disk_size:
             try:
                 while disk_size < max_disk_size:
                     # read 1 byte
                     self.diskfp.seek(disk_size + disk_jump_size)
                     tmp = self.diskfp.read(1)
+                    # only proceed if we read exactly 1 byte
+                    if len(tmp) != 1:
+                        raise Exception("Not 1 byte.")
                     # write byte back
                     self.diskfp.seek(disk_size + disk_jump_size)
                     self.diskfp.write(tmp)
