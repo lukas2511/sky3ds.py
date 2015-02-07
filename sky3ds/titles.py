@@ -29,6 +29,7 @@ def convert_template_to_json():
     template_txt_fp.close()
     out_templates = []
     for template in templates:
+        template = template.replace("\r","")
         template = template.split("\n")[:-3]
         out_templates.append({
             'serial': template[0],
