@@ -212,7 +212,7 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1])
         return gamecard.ncsd_header(self.diskfp.read(0x1200))
 
-    def write_rom(self, rom, silent=False):
+    def write_rom(self, rom, silent=False, progress=None):
         """Write rom to sdcard.
 
         Roms are stored at the position marked in the position headers (starting
@@ -266,11 +266,26 @@ class Sky3DS_Disk:
         # seek to start of rom on sd-card
         self.diskfp.seek(start_block * 0x200)
 
+        # open rom file
         romfp = open(rom, "rb")
+
+        # get card specific data from template.txt
+        serial = gamecard.ncsd_serial(romfp)
+        sha1 = gamecard.ncch_sha1sum(romfp)
+        template_data = titles.get_template(serial, sha1)
+        if not template_data:
+            raise Exception("Template entry not found")
+        print(template_data)
+
+        if sys.version_info.major == 3:
+            card_data = bytes.fromhex(template_data['card_data'])
+        else:
+            card_data = bytearray.fromhex(template_data['card_data'])
+        romfp.seek(0)
 
         # write rom (with fancy progressbar!)
         try:
-            if not silent:
+            if not silent and not progress:
                 progress = ProgressBar(widgets=[Percentage(), Bar(), FileTransferSpeed()], maxval=rom_size).start()
         except:
             pass
@@ -301,16 +316,6 @@ class Sky3DS_Disk:
         self.diskfp.seek(0x100000 * (1 + len(self.rom_list)))
         self.diskfp.write(bytearray([0xff]*0x100000))
 
-        # write data from template.txt to position 0x1400 in rom on sd-card
-        serial = gamecard.ncsd_serial(romfp)
-        sha1 = gamecard.ncch_sha1sum(romfp)
-        template_data = titles.get_template(serial, sha1)
-
-        if sys.version_info.major == 3:
-            card_data = bytes.fromhex(template_data['card_data'])
-        else:
-            card_data = bytearray.fromhex(template_data['card_data'])
-
         self.diskfp.seek(start_block * 0x200 + 0x1400)
         self.diskfp.write(card_data)
 
@@ -320,7 +325,7 @@ class Sky3DS_Disk:
 
         self.update_rom_list()
 
-    def dump_rom(self, slot, output, silent=False):
+    def dump_rom(self, slot, output, silent=False, progress=None):
         """Dump rom from sdcard to file
 
         This opens the rom position header at the specified slot, seeks to
@@ -343,7 +348,7 @@ class Sky3DS_Disk:
 
         # read rom
         try:
-            if not silent:
+            if not silent and not progress:
                 progress = ProgressBar(widgets=[Percentage(), Bar(), FileTransferSpeed()], maxval=rom_size).start()
         except:
             pass
