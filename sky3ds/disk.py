@@ -275,7 +275,6 @@ class Sky3DS_Disk:
         template_data = titles.get_template(serial, sha1)
         if not template_data:
             raise Exception("Template entry not found")
-        print(template_data)
 
         if sys.version_info.major == 3:
             card_data = bytes.fromhex(template_data['card_data'])
