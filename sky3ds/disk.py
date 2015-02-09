@@ -280,9 +280,19 @@ class Sky3DS_Disk:
             card_data = bytes.fromhex(template_data['card_data'])
         else:
             card_data = bytearray.fromhex(template_data['card_data'])
-        romfp.seek(0)
+
+        if rom[-4:] == ".3dz":
+            romfp.seek(0x1200)
+            rom_header = romfp.read(0x44)
+            if rom_header[0x00:0x10] != bytearray([0xff]*0x10):
+                print("Injecting headers from 3dz file instead of template.txt!")
+                for byte in range(0x40):
+                    card_data[0x40+byte] = rom_header[byte]
+                for byte in range(0x4):
+                    card_data[0x4+byte] = rom_header[0x40+byte]
 
         # write rom (with fancy progressbar!)
+        romfp.seek(0)
         try:
             if not silent and not progress:
                 progress = ProgressBar(widgets=[Percentage(), Bar(), FileTransferSpeed()], maxval=rom_size).start()
