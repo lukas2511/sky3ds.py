@@ -8,6 +8,12 @@ try:
 except:
     pass
 
+try:
+    from appdirs import user_data_dir
+    data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
+except:
+    pass
+
 from sky3ds import gamecard, titles
 
 class Sky3DS_Disk:
@@ -222,7 +228,7 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1] + 0x1400)
         return bytearray(self.diskfp.read(0x200))
 
-    def write_rom(self, rom, silent=False, progress=None):
+    def write_rom(self, rom, silent=False, progress=None, use_header_bin=False):
         """Write rom to sdcard.
 
         Roms are stored at the position marked in the position headers (starting
@@ -286,12 +292,24 @@ class Sky3DS_Disk:
         if not template_data:
             raise Exception("Template entry not found")
 
-        if sys.version_info.major == 3:
-            card_data = bytes.fromhex(template_data['card_data'])
-        else:
-            card_data = bytearray.fromhex(template_data['card_data'])
+        card_data = bytearray.fromhex(template_data['card_data'])
 
-        if rom[-4:] == ".3dz":
+        if use_header_bin:
+            header_bin = os.path.join(data_dir,'header.bin')
+            if os.path.exists(header_bin):
+                print("Injecting headers from header.bin instead of template.txt!")
+                try:
+                    header_bin_fp = open(header_bin, "rb")
+                    rom_header = bytearray(header_bin_fp.read(0x44))
+                    header_bin_fp.close()
+                    for byte in range(0x40):
+                        card_data[0x40+byte] = rom_header[byte]
+                    for byte in range(0x4):
+                        card_data[0x4+byte] = rom_header[0x40+byte]
+                except:
+                    raise Exception("Error: Can't inject headers from header.bin")
+
+        elif rom[-4:] == ".3dz":
             romfp.seek(0x1200)
             rom_header = romfp.read(0x44)
             if rom_header[0x00:0x10] != bytearray([0xff]*0x10):
