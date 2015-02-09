@@ -212,6 +212,16 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1])
         return gamecard.ncsd_header(self.diskfp.read(0x1200))
 
+    def sky3ds_header(self, slot):
+        """Retrieve sky3ds specific header from rom on sdcard.
+
+        This function retrieves the data that was written from template.txt to the sdcard"""
+
+        self.fail_on_non_sky3ds()
+
+        self.diskfp.seek(self.rom_list[slot][1] + 0x1400)
+        return bytearray(self.diskfp.read(0x200))
+
     def write_rom(self, rom, silent=False, progress=None):
         """Write rom to sdcard.
 

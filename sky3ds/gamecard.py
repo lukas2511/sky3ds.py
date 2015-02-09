@@ -68,7 +68,7 @@ def ncsd_header(raw_header_data):
         else:
             save_crypto = "<6.x"
     else:
-        save_crypto = "Repeat. Fail"
+        save_crypto = "Rpt. Fail"
 
     if sys.version_info.major == 3:
         contains_update = True if int(card_info_header['ncch_header']['flags'][5]) & (1 << 2) else False

@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--disk', help='Sky3DS disk')
 
     parser.add_argument('-l', '--list', help='List roms on disk (default operation)', action='store_true')
+    parser.add_argument('-v', '--verbose', help='More details on roms', action='store_true')
     parser.add_argument('-w', '--write', help='Write rom to disk')
     parser.add_argument('-b', '--backup', help='Backup rom from disk')
     parser.add_argument('-r', '--remove', help='Remove rom from disk')
@@ -95,12 +96,18 @@ if __name__ == '__main__':
     if args.write != None:
         disk.write_rom(args.write)
 
-    rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title', 'Save Crypto']]
+    rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
+    if args.verbose:
+        rom_table[0] += ['Sav-Crypt', 'Firm', 'Card ID', 'Unique ID']
+
     for rom in disk.rom_list:
         slot = rom[0]
         start = rom[1]
         size = rom[2]
         rom_header = disk.ncsd_header(slot)
+        sky3ds_header = disk.sky3ds_header(slot)
+        card_id = " ".join("%.2x" % x for x in sky3ds_header[0x04:0x08]).upper()
+        unique_id = " ".join("%.2x" % x for x in sky3ds_header[0x40:0x50]).upper()
         rom_info = titles.rom_info(rom_header['product_code'], rom_header['media_id'])
         if rom_info:
             title = rom_info['name']
@@ -115,10 +122,14 @@ if __name__ == '__main__':
             rom_header['card_type'],
             rom_header['product_code'],
             title,
-            rom_header['save_crypto'].rjust(12),
-            #firmware,
-            #'Yes' if rom_header['contains_update'] else 'No',
             ]]
+        if args.verbose:
+            rom_table[-1] += [
+                rom_header['save_crypto'].rjust(9),
+                firmware,
+                card_id,
+                unique_id,
+            ]
 
     col_width = [max(len(str(x)) for x in col) for col in zip(*rom_table)]
     for line in rom_table:
