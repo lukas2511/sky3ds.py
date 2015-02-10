@@ -228,7 +228,7 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1] + 0x1400)
         return bytearray(self.diskfp.read(0x200))
 
-    def write_rom(self, rom, silent=False, progress=None, use_header_bin=False):
+    def write_rom(self, rom, silent=False, progress=None, use_header_bin=False, verbose=False):
         """Write rom to sdcard.
 
         Roms are stored at the position marked in the position headers (starting
@@ -288,11 +288,52 @@ class Sky3DS_Disk:
         # get card specific data from template.txt
         serial = gamecard.ncsd_serial(romfp)
         sha1 = gamecard.ncch_sha1sum(romfp)
-        template_data = titles.get_template(serial, sha1)
-        if not template_data:
-            raise Exception("Template entry not found")
 
-        card_data = bytearray.fromhex(template_data['card_data'])
+        template_data = titles.get_template(serial, sha1)
+        if template_data:
+            generated_template = False
+            card_data = bytearray.fromhex(template_data['card_data'])
+
+        else:
+            generated_template = True
+            print("Automagically creating sky3ds header (this will fail, lol)")
+            card_data = bytearray()
+
+            # card crypto + card id + eeprom id(?)
+            romfp.seek(0x1244)
+            card_data += romfp.read(0x4)
+            romfp.seek(0x1240)
+            card_data += romfp.read(0x4)
+            romfp.seek(0x1248)
+            card_data += romfp.read(0x4)
+
+            # CRC16 of NCCH header?
+            romfp.seek(0x1000)
+            crc16 = titles.crc16(bytearray(romfp.read(0x200)))
+            card_data += bytearray(struct.pack("H", crc16)[::-1])
+            card_data += bytearray(struct.pack("H", (crc16 << 16 | crc16 ^ 0xffff) & 0xFFFF)[::-1])
+
+            # CTRIMAGE + zero-padding
+            card_data += bytearray("CTRIMAGE", "ascii")
+            card_data += bytearray([0x00]*0x8)
+
+            # ?!?!?!?
+            card_data += bytearray([0x00] * 0x10)
+
+            # zero-padding
+            card_data += bytearray([0x00] * 0x10)
+
+            # unique id
+            romfp.seek(0x1200)
+            card_data += romfp.read(0x40)
+
+            # name
+            romfp.seek(0x1150)
+            card_data += romfp.read(0x10)
+            card_data += bytearray([0x00] * 0xf0)
+
+            # zero-padding
+            card_data += bytearray([0x00] * 0x80)
 
         if use_header_bin:
             header_bin = os.path.join(data_dir,'header.bin')
@@ -323,6 +364,17 @@ class Sky3DS_Disk:
         crc16 = titles.crc16(card_data[:-2])
         card_data[-2] = (crc16 & 0xFF00) >> 8
         card_data[-1] = (crc16 & 0x00FF)
+
+        if generated_template and verbose:
+            print("** : %s" % card_data[0x80:0x90].decode("ascii"))
+            print("")
+            print("SHA1: %s" % gamecard.ncch_sha1sum(romfp))
+            for i in range(0, 0x20):
+                line = "%.2d: " % i
+                for j in range(0, 0x10):
+                    line += ("%.2x " % card_data[i*0x10+j]).upper()
+                print(line)
+            print("")
 
         # write rom (with fancy progressbar!)
         romfp.seek(0)

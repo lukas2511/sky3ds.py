@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--disk', help='Sky3DS disk')
 
     parser.add_argument('-l', '--list', help='List roms on disk (default operation)', action='store_true')
-    parser.add_argument('-v', '--verbose', help='More details on roms', action='store_true')
+    parser.add_argument('-v', '--verbose', help='More details', action='store_true')
     parser.add_argument('-w', '--write', help='Write rom to disk')
     parser.add_argument('-H', '--do-not-use-header-bin', help='Ignore header.bin', action='store_true')
     parser.add_argument('-b', '--backup', help='Backup rom from disk')
@@ -95,10 +95,7 @@ if __name__ == '__main__':
         disk.write_savegame(args.write_savegame)
 
     if args.write != None:
-        if args.do_not_use_header_bin:
-            disk.write_rom(args.write, use_header_bin=False)
-        else:
-            disk.write_rom(args.write, use_header_bin=True)
+        disk.write_rom(args.write, use_header_bin=not args.do_not_use_header_bin, verbose=args.verbose)
 
     rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
     if args.verbose:
