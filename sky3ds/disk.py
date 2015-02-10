@@ -319,6 +319,11 @@ class Sky3DS_Disk:
                 for byte in range(0x4):
                     card_data[0x4+byte] = rom_header[0x40+byte]
 
+        # recalculate checksum for sky3ds header (important after injection from 3dz or header.bin)
+        crc16 = titles.crc16(card_data[:-2])
+        card_data[-2] = (crc16 & 0xFF00) >> 8
+        card_data[-1] = (crc16 & 0x00FF)
+
         # write rom (with fancy progressbar!)
         romfp.seek(0)
         try:

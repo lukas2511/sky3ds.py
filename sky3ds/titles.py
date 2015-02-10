@@ -16,6 +16,16 @@ template_txt = os.path.join(data_dir, 'template.txt')
 template_json = os.path.join(data_dir, 'template.json')
 titles_json = os.path.join(data_dir, 'titles.json')
 
+def crc16(data):
+    crc = 0
+    for i in data:
+        tmp1 = (crc >> 8 & 0xff | crc << 8) ^ i
+        tmp2 = tmp1 ^ ((tmp1 & 0xff) >> 4)
+        tmp3 = tmp2 ^ (tmp2 << 12)
+        crc = tmp3 ^ ((tmp3 & 0xff) << 5)
+
+    return int(crc & 0xFFFF)
+
 def get_template(serial, sha1):
     template_json_fp = open(template_json)
     templates = json.load(template_json_fp)
