@@ -4,6 +4,7 @@ import sys
 import json
 import time
 import argparse
+import datetime
 
 if not os.path.exists("third_party/appdirs/appdirs.py") or not os.path.exists("third_party/progressbar/progressbar"):
     print("Uuuh!1 Can't find appdirs or progressbar module, did you load git submodules?!")
@@ -41,6 +42,7 @@ if __name__ == '__main__':
     parser.add_argument('-W', '--write-savegame', help='Write savegame to disk')
     parser.add_argument('-B', '--backup-savegame', help='Backup savegame from disk')
 #    parser.add_argument('-R', '--erase-savegame', help='Erase savegame from disk')
+    parser.add_argument('-Z', '--backup-all-savegames', help='Backup all savegames', action='store_true')
 
     parser.add_argument('-s', '--slot', help='Slot ID for --backup and --backup-savegame')
 
@@ -56,7 +58,7 @@ if __name__ == '__main__':
 
     disk = disk.Sky3DS_Disk(args.disk)
 
-    if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + args.format + args.update > 1:
+    if (args.backup != None) + (args.write != None) + (args.remove != None) + (args.backup_savegame != None) + (args.write_savegame != None) + args.format + args.backup_all_savegames + args.update > 1:
         print("Please specify only one operation.")
         sys.exit(1)
 
@@ -100,6 +102,25 @@ if __name__ == '__main__':
     rom_table = [['Slot', 'Start', 'Size', 'Type', 'Code', 'Title']]
     if args.verbose:
         rom_table[0] += ['Sav-Crypt', 'Firm', 'Card ID', 'Unique ID']
+
+    if args.backup_all_savegames:
+        for rom in disk.rom_list:
+            slot = rom[0]
+            rom_header = disk.ncsd_header(slot)
+            rom_info = titles.rom_info(rom_header['product_code'], rom_header['media_id'])
+
+            savegames_dir = os.path.join(data_dir, 'savegames')
+
+            if not os.path.exists(savegames_dir):
+                os.mkdir(savegames_dir)
+
+            savegame_dir = os.path.join(savegames_dir, ''.join(filter(lambda x: x in '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+& ', rom_info['name'])))
+
+            if not os.path.exists(savegame_dir):
+                os.mkdir(savegame_dir)
+
+            savegame_file = os.path.join(savegame_dir, "%s_%s.sav" % (rom_header['product_code'], datetime.datetime.now().strftime("%Y_%m_%d__%H_%M")))
+            disk.dump_savegame(slot, savegame_file)
 
     for rom in disk.rom_list:
         slot = rom[0]
