@@ -345,8 +345,6 @@ class Sky3DS_Disk:
                     header_bin_fp.close()
                     for byte in range(0x40):
                         card_data[0x40+byte] = rom_header[byte]
-                    for byte in range(0x4):
-                        card_data[0x4+byte] = rom_header[0x40+byte]
                 except:
                     raise Exception("Error: Can't inject headers from header.bin")
 
