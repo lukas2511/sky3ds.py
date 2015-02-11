@@ -365,12 +365,16 @@ class Sky3DS_Disk:
         card_data[-2] = (crc16 & 0xFF00) >> 8
         card_data[-1] = (crc16 & 0x00FF)
 
-        if generated_template and verbose:
+        if len(card_data) != 0x200:
+            raise Exception("Invalid template data")
+
+        if verbose:
+            print("Used template:")
             print("** : %s" % card_data[0x80:0x90].decode("ascii"))
             print("")
-            print("SHA1: %s" % gamecard.ncch_sha1sum(romfp))
+            print("SHA1: %s" % gamecard.ncch_sha1sum(romfp).upper())
             for i in range(0, 0x20):
-                line = "%.2d: " % i
+                line = ""
                 for j in range(0, 0x10):
                     line += ("%.2x " % card_data[i*0x10+j]).upper()
                 print(line)
