@@ -625,18 +625,36 @@ class Sky3DS_Disk:
         self.fail_on_non_sky3ds()
 
         savegamefp = open(savefile, "rb")
+
+        # CTR_SAVE
         ctr_save = savegamefp.read(0x8)
         if ctr_save != b'CTR_SAVE':
             raise Exception("Not a valid savegame")
 
+        # Product Code
         product_code = savegamefp.read(0xa).decode('ascii')
         slot,ncsd_header = self.find_game(product_code)
-
-        savegamefp.read(0x46)
-
         if slot == None:
             raise Exception("Game not on disk")
 
+        # Zero Padding (ignored)
+        savegamefp.read(0x1)
+
+        # Save Type (ignored, read directly from ncsd_header)
+        savegamefp.read(0x1)
+
+        # NAND save offset (ignored, read directly from ncsd_header)
+        savegamefp.read(0x4)
+
+        # Unique ID (+ recalculate crc)
+        self.diskfp.seek(self.rom_list[slot][1] + 0x1440)
+        self.diskfp.write(savegamefp.read(0x40))
+
+        self.diskfp.seek(0x1400)
+        crc16 = titles.crc16(self.diskfp.read(0x200-0x2))
+        self.diskfp.write(bytearray([(crc16 & 0xFF00) >> 8, crc16 & 0x00FF]))
+
+        # Savegame data
         if ncsd_header['card_type'] == 'Card1':
             self.diskfp.seek(0x100000 * (slot + 1))
             self.diskfp.write(savegamefp.read(0x100000))
