@@ -545,28 +545,40 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1])
         ncsd_header = gamecard.ncsd_header(self.diskfp.read(0x1200))
 
+        savegamefp = open(output, "wb")
+
+        # 0x00 CTR_SAVE
+        savegamefp.write(b'CTR_SAVE')
+
+        # 0x08 Product Code
+        savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
+
+        # Zero-Padding + Save Type (0x00 = Card1, 0x01 = Card2)
         if ncsd_header['card_type'] == 'Card1':
-            savegamefp = open(output, "wb")
-            savegamefp.write(b'CTR_SAVE')
-            savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
-            savegamefp.write(bytearray([0x00]*0x2))
-            savegamefp.write(bytearray([0xff]*0x44))
+            savegamefp.write(bytearray([0x00, 0x00]))
+        else:
+            savegamefp.write(bytearray([0x00, 0x01]))
+
+        # Nand save offset / Writable Address
+        self.diskfp.seek(self.rom_list[slot][1] + 0x200)
+        savegamefp.write(self.diskfp.read(0x4))
+
+        # Unique ID (0x40 bytes but only 0x10 really used)
+        self.diskfp.seek(self.rom_list[slot][1] + 0x1440)
+        savegamefp.write(self.diskfp.read(0x40))
+
+        # Savegame Data
+        if ncsd_header['card_type'] == 'Card1':
+            # from card1 region (byte 1M - 32M on disk)
             self.diskfp.seek(0x100000 * (slot + 1))
             savegamefp.write(self.diskfp.read(0x100000))
-            savegamefp.close()
-        elif ncsd_header['card_type'] == 'Card2':
-            savegamefp = open(output, "wb")
-            savegamefp.write(b'CTR_SAVE')
-            savegamefp.write(bytearray(ncsd_header['product_code'].encode('ascii')))
-            savegamefp.write(bytearray([0x00, 0x01]))
-            savegamefp.write(bytearray([0x00]*4))
-            self.diskfp.seek(self.rom_list[slot][1] + 0x1440)
-            savegamefp.write(self.diskfp.read(0x10))
-            savegamefp.write(bytearray([0xff]*0x30))
+        else:
+            # from writable region in rom
             self.diskfp.seek(self.rom_list[slot][1] + ncsd_header['writable_address'])
             for i in range(0, 10):
                 savegamefp.write(self.diskfp.read(0x100000))
-            savegamefp.close()
+
+        savegamefp.close()
 
     def find_game(self, product_code):
         """Find a game on sdcard by product-code
