@@ -40,11 +40,11 @@ def convert_template_to_json():
     out_templates = []
     for template in templates:
         template = template.replace("\r","")
-        template = template.split("\n")[:-3]
+        template = template.split("\n")
         out_templates.append({
             'serial': template[0],
             'sha1': template[2][6:].lower(),
-            'card_data': " ".join(template[3:])
+            'card_data': " ".join(template[3:]).strip()
         })
 
     template_json_fp = open(template_json, "w")
