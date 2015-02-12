@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 
 # 3ds related
+*.3dz
 *.3ds
 *.sav
 
