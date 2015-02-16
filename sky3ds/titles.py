@@ -3,6 +3,7 @@
 import os
 import json
 import sys
+import logging
 from xml.dom import minidom
 from appdirs import user_data_dir
 
@@ -91,7 +92,7 @@ def update_title_db():
     titles_json_fp = open(titles_json, "w")
     titles_json_fp.write(json.dumps(releases))
     titles_json_fp.close()
-    print("Title database updated (%d entries, %d failed)" % (len(releases), error))
+    logging.info("Title database updated (%d entries, %d failed)" % (len(releases), error))
 
 def rom_info(product_code, media_id):
     try:

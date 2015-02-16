@@ -2,6 +2,7 @@
 import sys
 import os
 import struct
+import logging
 
 try:
     from progressbar import FileTransferSpeed, ProgressBar, Percentage, Bar
@@ -261,8 +262,7 @@ class Sky3DS_Disk:
                 break
 
         if start_block == 0:
-            print("Error: Not enough free continous blocks")
-            return
+            raise Exception("Not enough free continous blocks")
 
         self.diskfp.seek(0)
         position_header_length = 0x100
@@ -276,8 +276,7 @@ class Sky3DS_Disk:
                 break
 
         if free_slot == -1:
-            print("Error: No free slot found. There can be a maximum of %d games on one card." % int(position_header_length / 0x8))
-            return
+            raise Exception("No free slot found. There can be a maximum of %d games on one card." % int(position_header_length / 0x8))
 
         # seek to start of rom on sd-card
         self.diskfp.seek(start_block * 0x200)
@@ -296,7 +295,7 @@ class Sky3DS_Disk:
 
         else:
             generated_template = True
-            print("Automagically creating sky3ds header (this will fail, lol)")
+            logging.warning("Automagically creating sky3ds header (this will fail, lol)")
             card_data = bytearray()
 
             # card crypto + card id + eeprom id(?)
@@ -338,7 +337,7 @@ class Sky3DS_Disk:
         if use_header_bin:
             header_bin = os.path.join(data_dir,'header.bin')
             if os.path.exists(header_bin):
-                print("Injecting headers from header.bin instead of template.txt!")
+                logging.info("Injecting headers from header.bin instead of template.txt!")
                 try:
                     header_bin_fp = open(header_bin, "rb")
                     rom_header = bytearray(header_bin_fp.read(0x44))
@@ -352,7 +351,7 @@ class Sky3DS_Disk:
             romfp.seek(0x1200)
             rom_header = romfp.read(0x44)
             if rom_header[0x00:0x10] != bytearray([0xff]*0x10):
-                print("Injecting headers from 3dz file instead of template.txt!")
+                logging.info("Injecting headers from 3dz file instead of template.txt!")
                 for byte in range(0x40):
                     card_data[0x40+byte] = rom_header[byte]
                 for byte in range(0x4):
@@ -367,16 +366,16 @@ class Sky3DS_Disk:
             raise Exception("Invalid template data")
 
         if verbose:
-            print("Used template:")
-            print("** : %s" % card_data[0x80:0x90].decode("ascii"))
-            print("")
-            print("SHA1: %s" % gamecard.ncch_sha1sum(romfp).upper())
+            template  = "\nUsed template:\n"
+            template += "** : %s\n" % card_data[0x80:0x90].decode("ascii")
+            template += "SHA1: %s\n" % gamecard.ncch_sha1sum(romfp).upper()
             for i in range(0, 0x20):
                 line = ""
                 for j in range(0, 0x10):
                     line += ("%.2x " % card_data[i*0x10+j]).upper()
-                print(line)
-            print("")
+                template += line + "\n"
+            template += "\n"
+            logging.info(template)
 
         # write rom (with fancy progressbar!)
         romfp.seek(0)

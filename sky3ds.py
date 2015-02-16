@@ -5,6 +5,9 @@ import json
 import time
 import argparse
 import datetime
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 if not os.path.exists("third_party/appdirs/appdirs.py") or not os.path.exists("third_party/progressbar/progressbar"):
     print("Uuuh!1 Can't find appdirs or progressbar module, did you load git submodules?!")
@@ -16,7 +19,7 @@ from appdirs import user_data_dir
 
 from sky3ds import disk, gamecard, titles
 
-if __name__ == '__main__':
+try:
     data_dir = user_data_dir('sky3ds', 'Aperture Laboratories')
     template_txt = os.path.join(data_dir, 'template.txt')
     template_json = os.path.join(data_dir, 'template.json')
@@ -161,4 +164,5 @@ if __name__ == '__main__':
     total_free_blocks = sum(512*i[1] for i in disk.free_blocks)
 
     print("Disk Size: %d MB | Free space: %d MB | Largest free continous space: %d MB" % (disk.disk_size/1024/1024, total_free_blocks/1024/1024, 512 * disk.free_blocks[0][1]/1024/1024))
-
+except Exception as e:
+    logging.error(e)
