@@ -32,22 +32,27 @@ class Sky3DS_Disk:
     rom_list = []
     free_blocks = []
 
-    def __init__(self, disk_path):
+    def __init__(self, disk_path, diskfp=None, disk_size=None):
         """Keyword Arguments:
 
         disk_path -- Location to sdcard blockdevice (not mount or partition!)"""
 
         self.disk_path = disk_path
 
-        try:
-            self.diskfp = open(disk_path, "r+b")
-        except:
-            raise Exception("Couldn't open disk, can't continue.")
+        if diskfp and disk_size:
+            self.diskfp = diskfp
+            self.disk_size = disk_size
 
-        try:
-            self.get_disk_size()
-        except:
-            raise Exception("Couldn't get disksize, will not continue.")
+        else:
+            try:
+                self.diskfp = open(disk_path, "r+b")
+            except:
+                raise Exception("Couldn't open disk, can't continue.")
+
+            try:
+                self.get_disk_size()
+            except:
+                raise Exception("Couldn't get disksize, will not continue.")
 
         self.check_if_sky3ds_disk()
 
