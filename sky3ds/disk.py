@@ -3,6 +3,9 @@ import sys
 import os
 import struct
 import logging
+import subprocess
+import plistlib
+import re
 
 try:
     from progressbar import FileTransferSpeed, ProgressBar, Percentage, Bar
@@ -22,6 +25,7 @@ class Sky3DS_Disk:
 
     diskfp = None
     disk_size = None
+    disk_path = None
 
     is_sky3ds_disk = False
 
@@ -43,10 +47,7 @@ class Sky3DS_Disk:
         try:
             self.get_disk_size()
         except:
-            try:
-                self.alternative_super_mega_ugly_get_disk_size_workaround_function_please_delete_me()
-            except:
-                raise Exception("Couldn't get disksize, will not continue.")
+            raise Exception("Couldn't get disksize, will not continue.")
 
         self.check_if_sky3ds_disk()
 
@@ -78,46 +79,37 @@ class Sky3DS_Disk:
         and reads how many bytes were skipped. This should be replaced with
         something more clean."""
 
-        self.diskfp.seek(0, os.SEEK_END)
-        disk_size = self.diskfp.tell()
-        disk_size = disk_size - disk_size % 0x2000000
-        if disk_size == 0:
-            raise Exception("0 byte disk?!")
-        self.disk_size = disk_size
+        if sys.platform == 'darwin':
+            # meh
+            if not re.match("^\/dev\/disk[0-9]+$", self.disk_path):
+                raise Exception("Disk path must be in format /dev/diskN")
 
-    def alternative_super_mega_ugly_get_disk_size_workaround_function_please_delete_me(self):
-        """no, just no."""
-
-        disk_size = 0
-        disk_jump_size = 1024*1024*1024
-        min_jump_size = 32*1024*1024
-        max_disk_size = 130*1024*1024*1024
-
-        while disk_jump_size >= min_jump_size and disk_size <= max_disk_size:
             try:
-                while disk_size < max_disk_size:
-                    # read 1 byte
-                    self.diskfp.seek(disk_size + disk_jump_size)
-                    tmp = self.diskfp.read(1)
-                    # only proceed if we read exactly 1 byte
-                    if len(tmp) != 1:
-                        raise Exception("Not 1 byte.")
-                    # write byte back
-                    self.diskfp.seek(disk_size + disk_jump_size)
-                    self.diskfp.write(tmp)
-                    # read + write succeeded, still in boundaries of disk..
-                    disk_size+=disk_jump_size
-            except:
-                disk_jump_size /= 2
-                pass
+                diskname = os.path.basename(self.disk_path)
+                diskutil_output = subprocess.check_output(["diskutil", "list", "-plist", self.disk_path])
+                if sys.version_info.major == 3:
+                    diskutil_plist = plistlib.loads(bytearray(diskutil_output, 'utf-8'))
+                else:
+                    diskutil_plist = plistlib.readPlistFromString(diskutil_output)
 
-        if disk_size > max_disk_size:
-            raise Exception("I don't think your microsd card is 130GB in size, so yea, uhm, I won't continue, sorry.")
+                disk_plist = plist['AllDisksAndPartitions'][0]
 
-        if disk_size == 0:
-            raise Exception("0 byte disk?!?")
+                if not disk_plist['DeviceIdentifier'] == diskname:
+                    raise Exception("DeviceIdentifier doesn't match, won't continue.")
 
-        self.disk_size = disk_size
+                self.disk_size = disk_plist['Size']
+
+            except Exception as e:
+                raise Exception("Can't get disk size from diskutil :(\nError was: %s" % e)
+
+            raise Exception("Sorry, disk size detection for osx is currently not working.")
+        else:
+            self.diskfp.seek(0, os.SEEK_END)
+            disk_size = self.diskfp.tell()
+            disk_size = disk_size - disk_size % 0x2000000
+            if disk_size == 0:
+                raise Exception("0 byte disk?!")
+            self.disk_size = disk_size
 
     def format(self):
         """Format sdcard
