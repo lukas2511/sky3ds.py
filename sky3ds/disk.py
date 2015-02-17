@@ -107,7 +107,6 @@ class Sky3DS_Disk:
             except Exception as e:
                 raise Exception("Can't get disk size from diskutil :(\nError was: %s" % e)
 
-            raise Exception("Sorry, disk size detection for osx is currently not working.")
         else:
             self.diskfp.seek(0, os.SEEK_END)
             disk_size = self.diskfp.tell()
