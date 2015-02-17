@@ -382,7 +382,7 @@ class Sky3DS_Disk:
             pass
         written = 0
         while written < rom_size:
-            chunk = romfp.read(1024*1024*6)
+            chunk = romfp.read(1024*1024*8)
 
             self.diskfp.write(chunk)
             os.fsync(self.diskfp)
