@@ -648,7 +648,7 @@ class Sky3DS_Disk:
         self.diskfp.seek(self.rom_list[slot][1] + 0x1400)
         card_data = self.diskfp.read(0x200)
         crc16 = titles.crc16(bytearray(card_data[:-2]))
-        self.diskfp.seek(0x1400 + 0x200 - 0x2)
+        self.diskfp.seek(self.rom_list[slot][1] + 0x1400 + 0x200 - 0x2)
         self.diskfp.write(bytearray([(crc16 & 0xFF00) >> 8, crc16 & 0x00FF]))
 
         # Savegame data
