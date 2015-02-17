@@ -93,16 +93,14 @@ class Sky3DS_Disk:
                 diskname = os.path.basename(self.disk_path)
                 diskutil_output = subprocess.check_output(["diskutil", "list", "-plist", self.disk_path])
                 if sys.version_info.major == 3:
-                    diskutil_plist = plistlib.loads(bytearray(diskutil_output, 'utf-8'))
+                    disk_plist = plistlib.loads(bytearray(diskutil_output, 'utf-8'))
                 else:
-                    diskutil_plist = plistlib.readPlistFromString(diskutil_output)
-
-                disk_plist = plist['AllDisksAndPartitions'][0]
+                    disk_plist = plistlib.readPlistFromString(diskutil_output)
 
                 if not disk_plist['DeviceIdentifier'] == diskname:
                     raise Exception("DeviceIdentifier doesn't match, won't continue.")
 
-                self.disk_size = disk_plist['Size']
+                self.disk_size = disk_plist['TotalSize']
 
             except Exception as e:
                 raise Exception("Can't get disk size from diskutil :(\nError was: %s" % e)
