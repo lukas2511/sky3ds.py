@@ -97,7 +97,7 @@ class Sky3DS_Disk:
                 else:
                     diskutil_plist = plistlib.readPlistFromString(diskutil_output)
 
-                disk_plist = plist['AllDisksAndPartitions'][0]
+                disk_plist = diskutil_plist['AllDisksAndPartitions'][0]
 
                 if not disk_plist['DeviceIdentifier'] == diskname:
                     raise Exception("DeviceIdentifier doesn't match, won't continue.")
