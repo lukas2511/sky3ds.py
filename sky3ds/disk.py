@@ -265,7 +265,7 @@ class Sky3DS_Disk:
 
         # find free slot for game (card format is limited to 31 games)
         free_slot = -1
-        for i in range(0, int(position_header_length / 0x8)):
+        for i in range(0, int(position_header_length / 0x8) - 1):
             position = struct.unpack("ii", self.diskfp.read(0x8))
             if position == (-1, -1):
                 free_slot = i
