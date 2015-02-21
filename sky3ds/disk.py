@@ -93,7 +93,7 @@ class Sky3DS_Disk:
                 diskname = os.path.basename(self.disk_path)
                 diskutil_output = subprocess.check_output(["diskutil", "list", "-plist", self.disk_path])
                 if sys.version_info.major == 3:
-                    diskutil_plist = plistlib.loads(bytearray(diskutil_output, 'utf-8'))
+                    diskutil_plist = plistlib.loads(diskutil_output)
                 else:
                     diskutil_plist = plistlib.readPlistFromString(diskutil_output)
 
