@@ -3,6 +3,8 @@
 # this script was written by somebody else, i have no idea how well it works, but people like clicky things
 # i especially dislike the sudo workaround, and i didn't really read the code, but i tested the gui,
 # it was working, i like it, so yea, here you go
+#
+# please also note that this file is not under the LICENSE of the rest of the code (for now)
 
 # import all the stuff the gui needs
 from Tkinter import *
