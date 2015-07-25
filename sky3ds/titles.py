@@ -53,7 +53,7 @@ def convert_template_to_json():
     template_json_fp.close()
 
 def update_title_db():
-    source = "http://3ds.essh.co/xml.php"
+    source = "http://3dsdb.com/xml.php"
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Ubuntu/12.04 Chromium/18.0.1025.168 Chrome/18.0.1025.168 Safari/535.19'
 
     if sys.version_info.major == 3:
