@@ -6,6 +6,7 @@ import sys
 import logging
 from xml.dom import minidom
 from appdirs import user_data_dir
+import re
 
 if sys.version_info.major == 3:
     import urllib.request
@@ -60,6 +61,8 @@ def update_title_db():
         xml_data = urllib.request.urlopen(urllib.request.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
     else:
         xml_data = urllib2.urlopen(urllib2.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+
+    xml_data = re.sub(r'<>[0-9]</>', '', xml_data)
 
     for bad_char in [0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0b, 0x0e, 0x0f]:
         xml_data = xml_data.replace(chr(bad_char), "")
