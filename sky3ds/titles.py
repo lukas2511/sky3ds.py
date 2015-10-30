@@ -58,9 +58,9 @@ def update_title_db():
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Ubuntu/12.04 Chromium/18.0.1025.168 Chrome/18.0.1025.168 Safari/535.19'
 
     if sys.version_info.major == 3:
-        xml_data = urllib.request.urlopen(urllib.request.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+        xml_data = urllib.request.urlopen(urllib.request.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8', errors='ignore')
     else:
-        xml_data = urllib2.urlopen(urllib2.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8')
+        xml_data = urllib2.urlopen(urllib2.Request(source, headers={'User-Agent': user_agent})).read().decode('utf8', errors='ignore')
 
     xml_data = re.sub(r'<>[0-9]</>', '', xml_data)
 
